@@ -1,0 +1,36 @@
+<html>
+<head>
+    <title> Current Image</title>
+</head>
+<body style="  display: flex;
+  align-items: center;
+  justify-content: center;">
+    <img id="target" src="http://localhost:3000/upload/sample.png" alt="first_image" style="min-width:100vw; max-height:100vh;">
+
+
+<script>
+let currentFile = 'sample.png';
+
+  const updateImage = (name)=> {
+      let img = document.getElementById('target');
+      img.src = "http://localhost:3000/upload/"+name;
+          }
+    const getLatestImage = ()=>{
+        fetch('http://localhost:3000/sortedPics')
+            .then(response => response.json()).then(data => data[0]).then(image => {
+                if (currentFile !== image){
+                    currentFile = image;
+                  updateImage(image);
+                }
+        })
+            .catch(error => console.error('Error:', error));
+    }
+    const sleep = duration => new Promise(resolve => setTimeout(resolve, duration));
+    const poll = (promiseFn, duration) => promiseFn().then(
+        sleep(duration).then(() => poll(promiseFn, duration)));
+
+    poll(() => new Promise(() => getLatestImage()), 5000)
+
+</script>
+</body>
+</html>
