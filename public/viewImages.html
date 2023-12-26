@@ -3,10 +3,12 @@
     <title> Current Image</title>
 </head>
 <body style="  display: flex;
+background-color: grey;
   align-items: center;
   justify-content: center;">
-    <img id="target" src="http://localhost:3000/upload/sample.png" alt="first_image" style="min-width:100vw; max-height:100vh;">
-
+ <div style="display:flex; height: calc(100vh - 25px)">
+    <img id="target" src="http://localhost:3000/upload/sample.png" alt="first_image" style="width:100%; max-height: 100%">
+ </div>
 
 <script>
 let currentFile = 'sample.png';
