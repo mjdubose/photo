@@ -15,10 +15,10 @@ let currentFile = 'sample.png';
 
   const updateImage = (name)=> {
       let img = document.getElementById('target');
-      img.src = "http://localhost:3000/upload/"+name;
+      img.src = "/upload/"+name;
           }
     const getLatestImage = ()=>{
-        fetch('http://localhost:3000/sortedPics')
+        fetch('/sortedPics')
             .then(response => response.json()).then(data => data[0]).then(image => {
                 if (currentFile !== image){
                     currentFile = image;
