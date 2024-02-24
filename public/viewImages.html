@@ -11,28 +11,42 @@ background-color: grey;
  </div>
 
 <script>
-let currentFile = 'sample.png';
+    let currentFile = 'sample.png';
+    const IMAGE_UPLOAD_FOLDER = "/upload/";
 
-  const updateImage = (name)=> {
-      let img = document.getElementById('target');
-      img.src = "/upload/"+name;
-          }
-    const getLatestImage = ()=>{
-        fetch('/sortedPics')
-            .then(response => response.json()).then(data => data[0]).then(image => {
-                if (currentFile !== image){
-                    currentFile = image;
-                  updateImage(image);
-                }
+const updateImage = (name) => {
+    const img = document.getElementById('target');
+    img.src = IMAGE_UPLOAD_FOLDER + name;
+}
+
+const fetchAndUpdateImage = () => {
+    return fetch('/sortedPics')
+        .then(response => response.json())
+        .then(data => data[0])
+        .then(image => {
+            if (currentFile !== image) {
+                currentFile = image;
+                updateImage(image);
+            }
         })
-            .catch(error => console.error('Error:', error));
-    }
-    const sleep = duration => new Promise(resolve => setTimeout(resolve, duration));
-    const poll = (promiseFn, duration) => promiseFn().then(
-        sleep(duration).then(() => poll(promiseFn, duration)));
+        .catch(error => {
+            console.error('Error:', error);
+            throw error;
+        });
+}
 
-    poll(() => new Promise(() => getLatestImage()), 5000)
+const sleep = duration => new Promise(resolve => setTimeout(resolve, duration));
 
+const poll = (promiseFn, duration) =>
+    promiseFn().finally(() => sleep(duration).then(() => poll(promiseFn, duration)));
+
+const promiseReturningLatestImage = () => {
+    return new Promise((resolve) => {
+        resolve(fetchAndUpdateImage());
+    });
+}
+
+poll(promiseReturningLatestImage, 5000);
 </script>
 </body>
 </html>

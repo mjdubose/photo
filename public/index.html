@@ -64,34 +64,40 @@
     <div id="result" class="result"></div>
 </div>
 
-<script>
-    const form = document.getElementById("form");
+<script>const form = document.getElementById("form");
+const filesInput = document.getElementById("files");
+const resultElement = document.getElementById("result");
 
-    form.addEventListener("submit", submitForm);
+form.addEventListener("submit", submitForm);
 
-    async function submitForm(e) {
-        e.preventDefault();
-
-        const files = document.getElementById("files");
-        const formData = new FormData();
-        for(let i =0; i < files.files.length; i++) {
-            formData.append("files", files.files[i]);
-        }
-        const result = document.getElementById("result");
-        result.innerHTML='Uploading...'
-      await  fetch("/upload", {
-            method: 'POST',
-            body: formData
-        })
-            .then((res) => {console.log(res);
-                const result = document.getElementById("result");
-                result.innerHTML = 'File uploaded';
-            })
-            .catch((err) => {console.log("Error occurred", err);
-            result.innerHTML =' Error Occurred'});
-
-        document.getElementById("files").value = null;
+async function uploadFiles(files) {
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append("files", files[i]);
     }
-</script>
+
+    const response = await fetch("/upload", {
+        method: 'POST',
+        body: formData
+    });
+
+    return response;
+}
+
+async function submitForm(e) {
+    e.preventDefault();
+
+    resultElement.innerHTML = 'Uploading...'
+
+    try {
+        await uploadFiles(filesInput.files);
+        resultElement.innerHTML = 'File uploaded';
+    } catch (err) {
+        console.error("Error occurred", err);
+        resultElement.innerHTML = 'Error occurred during file upload';
+    } finally {
+        filesInput.value = null;
+    }
+}</script>
 </body>
 </html>

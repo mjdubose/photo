@@ -1,74 +1,77 @@
-// Require the modules
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Create an express app
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Define the port
-const port = 3000;
+const SERVER_PORT = 3000;
+const UPLOAD_DIRECTORY = "upload/";
+const PUBLIC_DIRECTORY = "/public";
 
-const uploadDir = "upload/";
+const getFilePath = (fileName) => path.join(__dirname, fileName);
 
-// Define the storage destination and filename for the uploaded file
-const storage = multer.diskStorage({
+// Definition for multer's diskStorage
+const multerStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "upload"); // The upload folder must exist
+    fs.access(UPLOAD_DIRECTORY, (error) => {
+      if (error) {
+        cb(error);
+      } else {
+        cb(null, UPLOAD_DIRECTORY);
+      }
+    });
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname); // Use the original file name
+    cb(null, file.originalname);
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage: multerStorage });
 
-// Serve the index.html file from the public folder
-app.use(express.static("public"));
-app.use("/upload", express.static("upload"));
+app.use(express.static(PUBLIC_DIRECTORY));
+app.use("/upload", express.static(UPLOAD_DIRECTORY));
 
-app.get("/", function (req, res) {
-  res.sendFile(path.join(__dirname, "/public/index.html"));
+app.get("/", (req, res) => {
+  res.sendFile(getFilePath(`${PUBLIC_DIRECTORY}/index.html`));
 });
 
-app.get("/images", function (req, res) {
-  res.sendFile(path.join(__dirname, "/public/viewImages.html"));
+app.get("/images", (req, res) => {
+  res.sendFile(getFilePath(`${PUBLIC_DIRECTORY}/viewImages.html`));
 });
 
-app.get("/sortedPics", function (req, res) {
-  const getSortedFiles = async (dir) => {
-    const files = await fs.promises.readdir(dir);
-
-    return files
-      .map((fileName) => ({
-        name: fileName,
-        time: fs.statSync(`${dir}/${fileName}`).mtime.getTime(),
-      }))
-      .sort((a, b) => b.time - a.time)
-      .map((file) => file.name);
+const createFileData = async (directory, fileName) => {
+  return {
+    name: fileName,
+    time: fs.statSync(`${directory}/${fileName}`).mtime.getTime(),
   };
+};
 
-  getSortedFiles(uploadDir)
-    .then(function (fileNames) {
-      res.json(fileNames);
-    })
-    .catch(function (error) {
-      console.log(error);
-      res.json([]);
-    });
+const getSortedFileData = async (directory) => {
+  const fileNames = await fs.promises.readdir(directory);
+  const filesData = await Promise.all(
+    fileNames.map((fileName) => createFileData(directory, fileName)),
+  );
+
+  return filesData.sort((a, b) => b.time - a.time).map((file) => file.name);
+};
+
+app.get("/sortedPics", async (req, res) => {
+  try {
+    const sortedFiles = await getSortedFileData(UPLOAD_DIRECTORY);
+    res.json(sortedFiles);
+  } catch (error) {
+    console.error(`Error getting sorted files : ${error}`);
+    res.json([]);
+  }
 });
 
-// Define a route to handle the file upload
 app.post("/upload", upload.single("files"), (req, res) => {
-  // req.file is the file object
-  // req.body will hold the text fields, if there were any
-  res.send("File uploaded successfully!");
+  res.status(200).send("File uploaded successfully!");
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+app.listen(SERVER_PORT, () => {
+  console.log(`Server is running on port ${SERVER_PORT}`);
 });
