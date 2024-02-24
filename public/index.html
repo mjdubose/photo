@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 <head>
     <title>File Upload </title>
     <style>
@@ -76,12 +76,10 @@ async function uploadFiles(files) {
         formData.append("files", files[i]);
     }
 
-    const response = await fetch("/upload", {
+    return await fetch("/upload", {
         method: 'POST',
         body: formData
     });
-
-    return response;
 }
 
 async function submitForm(e) {
